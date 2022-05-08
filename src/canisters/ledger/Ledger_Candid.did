@@ -1,0 +1,46 @@
+type ICP = record {
+     e8s : nat64;
+};
+
+type TimeStamp = record {
+    timestamp_nanos: nat64;
+};
+
+type Address = blob;
+
+type SubAccount = blob;
+
+type BlockIndex = nat64;
+
+type Memo = nat64;
+
+type TransferArgs = record {
+    memo: Memo;
+    amount: ICP;
+    fee: ICP;
+    from_subaccount: opt SubAccount;
+    to: Address;
+    created_at_time: opt TimeStamp;
+};
+
+type TransferError = variant {
+    BadFee : record { expected_fee : ICP; };
+    InsufficientFunds : record { balance: ICP; };
+    TxTooOld : record { allowed_window_nanos: nat64 };
+    TxCreatedInFuture : null;
+    TxDuplicate : record { duplicate_of: BlockIndex; }
+};
+
+type TransferResult = variant {
+    Ok : BlockIndex;
+    Err : TransferError;
+};
+
+type AccountBalanceArgs = record {
+    account: Address;
+};
+
+service : {
+  transfer : (TransferArgs) -> (TransferResult);
+  account_balance : (AccountBalanceArgs) -> (ICP) query;
+}

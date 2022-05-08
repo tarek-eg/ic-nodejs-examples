@@ -1,0 +1,274 @@
+type definite_canister_settings = 
+ record {
+   compute_allocation: nat;
+   controllers: vec principal;
+   freezing_threshold: nat;
+   memory_allocation: nat;
+ };
+type canister_status = 
+ record {
+   cycles: nat;
+   memory_size: nat;
+   module_hash: opt vec nat8;
+   settings: definite_canister_settings;
+   status: variant {
+             running;
+             stopped;
+             stopping;
+           };
+ };
+type Vol = 
+ record {
+   swapCyclesVol: CyclesAmount;
+   swapIcpVol: IcpE8s;
+ };
+type TxnResult = 
+ variant {
+   err:
+    record {
+      code:
+       variant {
+         IcpTransferException;
+         InsufficientShares;
+         InvalidCyclesAmout;
+         InvalidIcpAmout;
+         NonceError;
+         PoolIsEmpty;
+         UnacceptableVolatility;
+         UndefinedError;
+       };
+      message: text;
+    };
+   ok:
+    record {
+      cycles: BalanceChange;
+      icpE8s: BalanceChange;
+      shares: ShareChange;
+      txid: Txid;
+    };
+ };
+type TxnRecord = 
+ record {
+   account: AccountId;
+   caller: AccountId;
+   cyclesWallet: opt CyclesWallet;
+   data: opt Data;
+   details:
+    vec
+     record {
+       counterparty: Txid;
+       token0Value: BalanceChange;
+       token1Value: BalanceChange;
+     };
+   fee: record {
+          token0Fee: nat;
+          token1Fee: nat;
+        };
+   index: nat;
+   msgCaller: opt principal;
+   nonce: Nonce;
+   operation: OperationType;
+   orderType: variant {
+                AMM;
+                OrderBook;
+              };
+   shares: ShareChange;
+   time: Time;
+   token0: TokenType;
+   token0Value: BalanceChange;
+   token1: TokenType;
+   token1Value: BalanceChange;
+   txid: Txid;
+ };
+type Txid = blob;
+type TransferError = 
+ variant {
+   BadFee: record {expected_fee: ICP;};
+   InsufficientFunds: record {balance: ICP;};
+   TxCreatedInFuture;
+   TxDuplicate: record {duplicate_of: BlockIndex;};
+   TxTooOld: record {allowed_window_nanos: nat64;};
+ };
+type TransStatus = 
+ variant {
+   Failure;
+   Fallback;
+   Processing;
+   Success;
+ };
+type TokenType = 
+ variant {
+   Cycles;
+   Icp;
+   Token: principal;
+ };
+type Timestamp = nat;
+type Time = int;
+type Shares = nat;
+type ShareWeighted = 
+ record {
+   shareTimeWeighted: nat;
+   updateTime: Timestamp;
+ };
+type ShareChange = 
+ variant {
+   Burn: Shares;
+   Mint: Shares;
+   NoChange;
+ };
+type Sa = vec nat8;
+type PriceWeighted = 
+ record {
+   cyclesTimeWeighted: nat;
+   icpTimeWeighted: nat;
+   updateTime: Timestamp;
+ };
+type OperationType = 
+ variant {
+   AddLiquidity;
+   Claim;
+   RemoveLiquidity;
+   Swap;
+ };
+type Nonce = nat;
+type Liquidity = 
+ record {
+   cycles: nat;
+   icpE8s: IcpE8s;
+   priceWeighted: PriceWeighted;
+   shareWeighted: ShareWeighted;
+   shares: Shares;
+   swapCount: nat64;
+   unitValue: record {
+                float64;
+                float64;
+              };
+   vol: Vol;
+ };
+type IcpTransferLog = 
+ record {
+   fee: IcpE8s;
+   from: AccountId;
+   status: TransStatus;
+   to: AccountId;
+   updateTime: Timestamp;
+   value: IcpE8s;
+ };
+type IcpE8s = nat;
+type ICP = record {e8s: nat64;};
+type FeeStatus = 
+ record {
+   cumulFee: record {
+               cyclesBalance: CyclesAmount;
+               icpBalance: IcpE8s;
+             };
+   fee: float64;
+   totalFee: record {
+               cyclesBalance: CyclesAmount;
+               icpBalance: IcpE8s;
+             };
+ };
+type ErrorLog = 
+ variant {
+   IcpSaToMain:
+    record {
+      debit: record {
+               nat64;
+               AccountId;
+               IcpE8s;
+             };
+      errMsg: TransferError;
+      time: Timestamp;
+      user: AccountId;
+    };
+   Withdraw:
+    record {
+      credit: record {
+                CyclesWallet;
+                CyclesAmount;
+                AccountId;
+                IcpE8s;
+              };
+      cyclesErrMsg: text;
+      icpErrMsg: opt TransferError;
+      time: Timestamp;
+      user: AccountId;
+    };
+ };
+type ErrorAction = 
+ variant {
+   delete;
+   fallback;
+   resendCycles;
+   resendIcp;
+   resendIcpCycles;
+ };
+type Data = blob;
+type DRC207Support = 
+ record {
+   cycles_receivable: bool;
+   monitorable_by_blackhole:
+    record {
+      allowed: bool;
+      canister_id: opt principal;
+    };
+   monitorable_by_self: bool;
+   timer: record {
+            enable: bool;
+            interval_seconds: opt nat;
+          };
+ };
+type CyclesWallet = principal;
+type CyclesTransferLog = 
+ record {
+   from: principal;
+   status: TransStatus;
+   to: principal;
+   updateTime: Timestamp;
+   value: CyclesAmount;
+ };
+type CyclesAmount = nat;
+type Config = 
+ record {
+   CYCLES_LIMIT: opt nat;
+   FEE: opt nat;
+   ICP_FEE: opt nat64;
+   ICP_LIMIT: opt nat;
+   MAX_CACHE_NUMBER_PER: opt nat;
+   MAX_CACHE_TIME: opt nat;
+   MAX_STORAGE_TRIES: opt nat;
+   MIN_CYCLES: opt nat;
+   MIN_ICP_E8S: opt nat;
+   STORAGE_CANISTER: opt text;
+   CYCLESFEE_RETENTION_RATE: opt nat;
+ };
+type BlockIndex = nat64;
+type BalanceChange = 
+ variant {
+   CreditRecord: nat;
+   DebitRecord: nat;
+   NoChange;
+ };
+type Address = text;
+type AccountId = blob;
+type CyclesMarket = service {
+   getAccountId: (Address) -> (text) query;
+   add: (Address, opt Nonce, opt Data) -> (TxnResult);
+   remove: (opt Shares, CyclesWallet, opt Nonce, opt Sa, opt Data) -> (TxnResult);
+   cyclesToIcp: (Address, opt Nonce, opt Data) -> (TxnResult);
+   icpToCycles: (IcpE8s, CyclesWallet, opt Nonce, opt Sa, opt Data) -> (TxnResult);
+   claim: (CyclesWallet, opt Nonce, opt Sa, opt Data) -> (TxnResult);
+   count: (opt Address) -> (nat) query;
+   canister_status: () -> (canister_status);
+   feeStatus: () -> (FeeStatus) query;
+   getConfig: () -> (Config) query;
+   getEvents: (opt Address) -> (vec TxnRecord) query;
+   lastTxids: (opt Address) -> (vec Txid) query;
+   liquidity: (opt Address) -> (Liquidity) query;
+   lpRewards: (Address) -> (record { cycles: nat; icp: nat;}) query;
+   txnRecord: (Txid) -> (opt TxnRecord) query;
+   txnRecord2: (Txid) -> (opt TxnRecord);
+   yield: () -> (record { apyCycles: float64; apyIcp: float64;}, record {apyCycles: float64; apyIcp: float64;}) query;
+   version: () -> (text) query;
+};
+service : () -> CyclesMarket
