@@ -20,7 +20,7 @@ https://smartcontracts.org/docs/current/developer-docs/quickstart/hello10mins
 
 `PATH_TO_PRIVATE_KEY` path to your identity private keys
 
-`HOST` should be always localhost
+`HOST` should be https://boundary.ic0.app/
 
 `CYCLES_WALLET` your wallet cansiter that holds your cycles
 
